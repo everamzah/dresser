@@ -111,7 +111,10 @@ minetest.register_node("dresser:dresser", {
 		else
 			return 0
 		end
-	end
+	end,
+	can_dig = function(pos)
+		return minetest.get_inventory({type = "node", pos = pos}):is_empty("main")
+	end,
 })
 
 minetest.register_craft({
