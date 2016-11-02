@@ -1,3 +1,12 @@
+--[[ Dresser mod for Minetest
+     skins.txt, inside world directory,
+     is formatted as `name:texture'.
+     (Without the quotes.)
+
+     Copyright 2016 James Stevenson (everamzah)
+     Licensed under the LGPL 3.0, see LICENSE.
+     Textures licensed separately, see README.]]
+
 local dresser = {}
 local skin_db = {}
 
@@ -7,8 +16,9 @@ local mod_path = minetest.get_worldpath()
 local load = function ()
 	local fh, err = io.open(mod_path .. "/skins.txt", "r")
 	if err then
-		skin_db = {{"dusty", "Dusty"}, {"sam", "Sam"}}
+		skin_db = {{"sam", "Sam"}, {"c55", "Celeron55"}}
 		minetest.log("action", "[" .. mod_name .. "] No skins.txt found!  Loading default skins.")
+		-- TODO: Write skins.txt with this as a template.
 		return
 	end
 	while true do
@@ -42,7 +52,7 @@ local function show_formspec(name, skin, spos)
 		default.gui_bg_img ..
 		default.gui_slots ..
 		"list[detached:skin_" .. name .. ";main;0,1.5;1,1]" ..
-		"image[0.75,0.1;4,4;kalite_skin_" .. skin .. ".png]" ..
+		"image[0.75,0.1;4,4;dresser_skin_" .. skin .. "_item.png]" ..
 		"list[nodemeta:" .. spos .. ";main;4,0.5;4,3]" ..
 		"list[current_player;main;0,4.25;8,1;]" ..
 		"list[current_player;main;0,5.5;8,3;8]" ..
@@ -51,7 +61,7 @@ end
 
 -- Nodes
 minetest.register_node("dresser:dresser", {
-	description = "Wardrobe",
+	description = "Dresser",
 	paramtype2 = "facedir",
 	tiles = {
 		"default_wood.png",
@@ -65,7 +75,7 @@ minetest.register_node("dresser:dresser", {
 	groups = {choppy = 2, flammable = 5},
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
-		meta:set_string("infotext", "Wardrobe")
+		meta:set_string("infotext", "Dresser")
 		local inv = meta:get_inventory()
 		inv:set_size("main", 4 * 3)
 	end,
@@ -77,10 +87,10 @@ minetest.register_node("dresser:dresser", {
 		local current_skin = get_skin(clicker)
 
 		for _, v in pairs(skin_db) do
-			if current_skin == "character_" .. v[1] .. ".png" then
+			if current_skin == "dresser_skin_" .. v[1] .. ".png" then
 				skin = v[1]
 			elseif not skin then
-				skin = "dusty"
+				skin = "sam"
 			end
 		end
 
@@ -108,7 +118,7 @@ minetest.register_craft({
 for _, v in pairs(skin_db) do
 	minetest.register_craftitem("dresser:skin_" .. v[1], {
 		description = v[2],
-		inventory_image = "kalite_skin_" .. v[1] .. ".png",
+		inventory_image = "dresser_skin_" .. v[1] .. "_item.png",
 		groups = {skin = 1},
 		stack_max = 1
 	})
@@ -119,10 +129,10 @@ minetest.register_on_newplayer(function(player)
 	local name = player:get_player_name()
 	minetest.after(0.1, function ()
 		local inv = minetest.get_inventory{type = "player", name = name}
-		inv:set_stack("skin", 1, {name = "dresser:skin_dusty"})
+		inv:set_stack("skin", 1, {name = "dresser:skin_sam"})
 
 		local detached = minetest.get_inventory{type = "detached", name = "skin_" .. name}
-		detached:set_stack("main", 1, {name = "dresser:skin_dusty"})
+		detached:set_stack("main", 1, {name = "dresser:skin_sam"})
 	end)
 end)
 
@@ -135,7 +145,7 @@ minetest.register_on_joinplayer(function(player, _)
 
 	for _, v in pairs(skin_db) do
 		if skin_inv:contains_item("skin", {name = "dresser:skin_" .. v[1]}) then
-			player:set_properties({textures = {"character_" .. v[1] .. ".png"}})
+			player:set_properties({textures = {"dresser_skin_" .. v[1] .. ".png"}})
 		end
 	end
 
@@ -155,7 +165,7 @@ minetest.register_on_joinplayer(function(player, _)
 
 			for _, v in pairs(skin_db) do
 				if stack:get_name() == "dresser:skin_" .. v[1] then
-					player:set_properties({textures = {"character_" .. v[1] .. ".png"}})
+					player:set_properties({textures = {"dresser_skin_" .. v[1] .. ".png"}})
 					skin_inv:set_stack("skin", 1, {name = "dresser:skin_" .. v[1]})
 					return show_formspec(name, v[1], dresser[player:get_player_name()])
 				end
