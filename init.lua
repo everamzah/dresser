@@ -1,24 +1,33 @@
 --[[ Dresser mod for Minetest
      skins.txt, inside world directory,
-     is formatted as `name:texture'.
-     (Without the quotes.)
+     is formatted as `name:description'
+     (without the quotes), and is auto-
+     generated.
 
      Copyright 2016 James Stevenson (everamzah)
      Licensed under the LGPL 3.0, see LICENSE.
      Textures licensed separately, see README.]]
 
-local dresser = {}
+local dresser = {}	-- Position of Dresser as a string.
 local skin_db = {}
 
 local mod_name = minetest.get_current_modname()
-local mod_path = minetest.get_worldpath()
+local world_path = minetest.get_worldpath()
 
 local load = function ()
-	local fh, err = io.open(mod_path .. "/skins.txt", "r")
+	local fh, err = io.open(world_path .. "/skins.txt", "r")
 	if err then
 		skin_db = {{"sam", "Sam"}, {"c55", "Celeron55"}}
 		minetest.log("action", "[" .. mod_name .. "] No skins.txt found!  Loading default skins.")
-		-- TODO: Write skins.txt with this as a template.
+
+		local fh, err = io.open(world_path .. "/skins.txt", "w")
+		if err then
+			minetest.log("action", "[" .. mod_name .. "] Unable to write skins.txt!")
+			return
+		end
+
+		fh:write("sam:Sam\nc55:Celeron55")
+		minetest.log("action", "[" .. mod_name .. "] Created skins.txt.")
 		return
 	end
 	while true do
@@ -34,32 +43,33 @@ local load = function ()
 		table.insert(skin_db, w)
 	end
 	fh:close()
-	minetest.log("action", table.getn(skin_db) .. " skins loaded.")
+	minetest.log("action", "[" .. mod_name .. "] " .. table.getn(skin_db) .. " skins loaded.")
 end
 
-load()		-- Why put this in a function?
+load()
 
 
--- Functions
 local function get_skin(player)
 	local skin = player:get_properties().textures[1]
 	return skin
 end
 
 local function show_formspec(name, skin, spos)
-	minetest.show_formspec(name, "skinform",
+	minetest.show_formspec(name, "dresser:dresser",
 		"size[8,8.5]" ..
 		default.gui_bg_img ..
 		default.gui_slots ..
+		"label[0,1;Skin]" ..
 		"list[detached:skin_" .. name .. ";main;0,1.5;1,1]" ..
 		"image[0.75,0.1;4,4;dresser_skin_" .. skin .. "_item.png]" ..
+		"label[4,0;Storage]" ..
 		"list[nodemeta:" .. spos .. ";main;4,0.5;4,3]" ..
 		"list[current_player;main;0,4.25;8,1;]" ..
 		"list[current_player;main;0,5.5;8,3;8]" ..
 		default.get_hotbar_bg(0, 4.25))
 end
 
--- Nodes
+-- Dresser node and its craft recipe:
 minetest.register_node("dresser:dresser", {
 	description = "Dresser",
 	paramtype2 = "facedir",
@@ -72,7 +82,7 @@ minetest.register_node("dresser:dresser", {
 		"dresser_dresser.png",
 	},
 	sounds = default.node_sound_wood_defaults(),
-	groups = {choppy = 2, flammable = 5},
+	groups = {choppy = 3, oddly_breakable_by_hand = 2, flammable = 3},
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
 		meta:set_string("infotext", "Dresser")
@@ -80,9 +90,8 @@ minetest.register_node("dresser:dresser", {
 		inv:set_size("main", 4 * 3)
 	end,
 	on_rightclick = function(pos, node, clicker, itemstack, pointed_thing)
-		local name = clicker:get_player_name()
 		local spos = pos.x .. "," .. pos.y .. "," .. pos.z
-		dresser[name] = spos
+		dresser[clicker:get_player_name()] = spos
 		local skin
 		local current_skin = get_skin(clicker)
 
@@ -94,7 +103,7 @@ minetest.register_node("dresser:dresser", {
 			end
 		end
 
-		show_formspec(name, skin, spos)
+		show_formspec(clicker:get_player_name(), skin, spos)
 	end,
 	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
 		if minetest.get_item_group(stack:get_name(), "skin") == 1 then
@@ -114,7 +123,7 @@ minetest.register_craft({
 	}
 })
 
--- Craftitems
+-- Register skin craftitems.
 for _, v in pairs(skin_db) do
 	minetest.register_craftitem("dresser:skin_" .. v[1], {
 		description = v[2],
@@ -124,7 +133,8 @@ for _, v in pairs(skin_db) do
 	})
 end
 
--- Callbacks?
+
+---[[
 minetest.register_on_newplayer(function(player)
 	local name = player:get_player_name()
 	minetest.after(0.1, function ()
@@ -135,13 +145,13 @@ minetest.register_on_newplayer(function(player)
 		detached:set_stack("main", 1, {name = "dresser:skin_sam"})
 	end)
 end)
+--]]
 
+minetest.register_on_joinplayer(function(player)
+	-- FIXME Old players missing the skin inventory do not receive their skin
 
-minetest.register_on_joinplayer(function(player, _)
 	local skin_inv = player:get_inventory()
 	skin_inv:set_size("skin", 1)
-
-	-- FIXME Old players missing the skin inventory do not receive their skin
 
 	for _, v in pairs(skin_db) do
 		if skin_inv:contains_item("skin", {name = "dresser:skin_" .. v[1]}) then
@@ -170,7 +180,7 @@ minetest.register_on_joinplayer(function(player, _)
 					return show_formspec(name, v[1], dresser[player:get_player_name()])
 				end
 			end
-		end
+		end,
 	})
 	skin:set_size("main", 1)
 
