@@ -1,5 +1,4 @@
 local dresser = {}
-
 local skin_db = {}
 
 local mod_name = minetest.get_current_modname()
@@ -28,7 +27,7 @@ local load = function ()
 	minetest.log("action", table.getn(skin_db) .. " skins loaded.")
 end
 
-load() -- Why put this in a function?
+load()		-- Why put this in a function?
 
 
 -- Functions
@@ -47,8 +46,7 @@ local function show_formspec(name, skin, spos)
 		"list[nodemeta:" .. spos .. ";main;4,0.5;4,3]" ..
 		"list[current_player;main;0,4.25;8,1;]" ..
 		"list[current_player;main;0,5.5;8,3;8]" ..
-		default.get_hotbar_bg(0, 4.25)
-	)
+		default.get_hotbar_bg(0, 4.25))
 end
 
 -- Nodes
