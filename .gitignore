@@ -1,1 +1,6 @@
 *.swp
+textures/dresser_skin*
+!textures/dresser_skin_sam.png
+!textures/dresser_skin_sam_item.png
+!textures/dresser_skin_c55.png
+!textures/dresser_skin_c55_item.png
