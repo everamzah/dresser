@@ -1,12 +1,15 @@
-dresser = {}
+local dresser = {}
 
 local skin_db = {}
 
+local mod_name = minetest.get_current_modname()
+local mod_path = minetest.get_worldpath()
+
 local load = function ()
-	local fh, err = io.open(minetest.get_worldpath() .. "/skins.txt", "r")
+	local fh, err = io.open(mod_path .. "/skins.txt", "r")
 	if err then
 		skin_db = {{"dusty", "Dusty"}, {"sam", "Sam"}}
-		minetest.log("action", "No skins.txt found!  Loading default skins.")
+		minetest.log("action", "[" .. mod_name .. "] No skins.txt found!  Loading default skins.")
 		return
 	end
 	while true do
