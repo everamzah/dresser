@@ -184,7 +184,8 @@ minetest.register_on_joinplayer(function(player)
 				end
 			end
 		end,
-	})
+	},
+	player:get_player_name() ) -- fix hang due to data leak
 	skin:set_size("main", 1)
 
 	for _, v in pairs(skin_db) do
